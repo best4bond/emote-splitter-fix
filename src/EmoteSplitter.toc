@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 ## Interface: 110207
-## Title: Emote Splitter - Fix
+## Title: Emote Splitter Fix
 ## Version: @@addon_version@@
 ## Notes: Unlocks chatbox and splits long emotes.
 ## Author: Tammya-MoonGuard (TempFix by Damarlas-MoonGuard)
@@ -26,4 +26,5 @@ emoteprotection.lua
 
 # ----- Options Panel ----------------------
 options.lua
+
 
