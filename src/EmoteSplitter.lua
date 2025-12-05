@@ -60,6 +60,24 @@ EmoteSplitter = Me
 local L      = Me.Locale -- Easy access to our locale data.
 local Gopher = LibGopher
 
+-- Compatibility shim: some older addons call `ChatFrame_GetMessageEventFilters()`
+-- which was removed/changed in newer clients. Define a safe stub so those
+-- addons don't throw a hard error. We return an empty table or delegate to
+-- a chatframe method when available.
+if type( ChatFrame_GetMessageEventFilters ) ~= "function" then
+	ChatFrame_GetMessageEventFilters = function( ... )
+		-- If any chatframe exposes a helper, prefer that.
+		for i = 1, (NUM_CHAT_WINDOWS or 10) do
+			local cf = _G["ChatFrame" .. i]
+			if cf and type( cf.GetMessageEventFilters ) == "function" then
+				return cf:GetMessageEventFilters()
+			end
+		end
+		-- Fallback: return an empty table so callers can iterate safely.
+		return {}
+	end
+end
+
 -------------------------------------------------------------------------------
 -- Our slash command /emotesplitter.
 --
@@ -149,7 +167,19 @@ function Me:OnEnable()
 	Gopher.Internal.continue_frame_label = L["Press enter to continue."]
 
 	-- Unlock the chat editboxes when they show.
-	hooksecurefunc( "ChatEdit_OnShow", Me.ChatEdit_OnShow ) 
+	-- Compatibility: newer clients may not expose a global `ChatEdit_OnShow`
+	-- function. If it's present we hook it; otherwise fall back to hooking
+	-- the editbox frames directly so we don't error.
+	if type( ChatEdit_OnShow ) == "function" then
+		hooksecurefunc( "ChatEdit_OnShow", Me.ChatEdit_OnShow )
+	else
+		for i = 1, NUM_CHAT_WINDOWS do
+			local editbox = _G["ChatFrame" .. i .. "EditBox"]
+			if editbox and editbox.HookScript then
+				editbox:HookScript( "OnShow", Me.ChatEdit_OnShow )
+			end
+		end
+	end
 	
 	-- We're unlocking the chat editboxes here. This may be redundant, because
 	--  we also do it in the hook when the editbox shows, but it's for extra

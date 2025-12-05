@@ -353,6 +353,46 @@ function Me.SetupContinueFrame()
    local text = Me.continue_frame.text
    text:SetFontObject( GameFontNormal )
    text:SetAllPoints()
+   
+   -- Make the continue overlay clickable as a fallback when Enter doesn't
+   -- trigger ChatFrame_OpenChat on some clients or when other addons steal
+   -- focus. Clicking will simulate the hardware keystroke to resume sending.
+   Me.continue_frame:EnableMouse( true )
+   Me.continue_frame:SetScript( "OnMouseDown", function()
+      Me.DebugLog( "Continue frame clicked - forcing throttler resume." )
+      Me.HideContinueFrame()
+      Me.PipeThrottlerKeystroke()
+   end)
+   Me.continue_frame:SetFrameStrata( "DIALOG" )
+
+   -- Hook chat editboxes' OnEnterPressed so pressing Enter will resume the
+   -- throttler when the continue prompt is shown. This is guarded so we only
+   -- hook them once.
+   if not Me._continue_enter_hooked then
+      Me._continue_enter_hooked = true
+      for i = 1, (NUM_CHAT_WINDOWS or 10) do
+         local editbox = _G["ChatFrame" .. i .. "EditBox"]
+         if editbox and editbox.HookScript then
+            editbox:HookScript( "OnEnterPressed", function()
+               if Me.prompt_continue and (Me.intercept_enter == nil or Me.intercept_enter) then
+                  Me.DebugLog( "EditBox OnEnterPressed - forcing throttler resume." )
+                  Me.HideContinueFrame()
+                  Me.PipeThrottlerKeystroke()
+               end
+            end)
+         end
+      end
+      -- Try hooking some common alternate editboxes (Communities)
+      if CommunitiesFrame and CommunitiesFrame.ChatEditBox and CommunitiesFrame.ChatEditBox.HookScript then
+         CommunitiesFrame.ChatEditBox:HookScript( "OnEnterPressed", function()
+            if Me.prompt_continue and (Me.intercept_enter == nil or Me.intercept_enter) then
+               Me.DebugLog( "Communities EditBox OnEnterPressed - forcing throttler resume." )
+               Me.HideContinueFrame()
+               Me.PipeThrottlerKeystroke()
+            end
+         end)
+      end
+   end
 end
 
 -------------------------------------------------------------------------------
@@ -1929,9 +1969,25 @@ end
 
 if not Me.hooks.ChatFrame_OpenChat then
    Me.hooks.ChatFrame_OpenChat = true
-   hooksecurefunc( "ChatFrame_OpenChat", function( ... )
-      Me.OnOpenChat( ... )
-   end)
+   -- Prefer a direct override so we can intercept a user's Enter/key
+   -- before the editbox opens. This avoids requiring two Enter presses.
+   if type( ChatFrame_OpenChat ) == "function" then
+      Me.hooks.ChatFrame_OpenChatOrig = ChatFrame_OpenChat
+      ChatFrame_OpenChat = function( text, chatFrame )
+         if Me.prompt_continue and (Me.intercept_enter == nil or Me.intercept_enter) then
+            Me.DebugLog( "ChatFrame_OpenChat intercepted - forcing resume." )
+            Me.HideContinueFrame()
+            Me.PipeThrottlerKeystroke()
+            return
+         end
+         return Me.hooks.ChatFrame_OpenChatOrig( text, chatFrame )
+      end
+   else
+      -- Fallback to secure post-hook if override isn't available.
+      hooksecurefunc( "ChatFrame_OpenChat", function( ... )
+         Me.OnOpenChat( ... )
+      end)
+   end
 end
 
 if C_Club then -- [7.x compat]
