@@ -167,7 +167,7 @@ function Me:OnEnable()
 	Gopher.Internal.continue_frame_label = L["Press enter to continue."]
 
 	-- Unlock the chat editboxes when they show.
-		-- Compatibility: newer clients may not expose a global `ChatEdit_OnShow`
+	-- Compatibility: newer clients may not expose a global `ChatEdit_OnShow`
 	-- function. If it's present we hook it; otherwise fall back to hooking
 	-- the editbox frames directly so we don't error.
 	if type( ChatEdit_OnShow ) == "function" then

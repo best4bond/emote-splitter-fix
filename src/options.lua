@@ -42,6 +42,7 @@ local DB_DEFAULTS = {
 		-- It's called protection and not something like undo because it's
 		--  designed to protect your emotes if you disconnect.
 		emoteprotection = true;
+
 	};
 	-- The `char` table is unique per character, meaning that each character
 	--  the player has can store different data.
@@ -212,6 +213,8 @@ local OPTIONS_TABLE = {
 			set = function( info, val ) Me.db.global.showsending = val end;
 			get = function( info ) return Me.db.global.showsending end;
 		};
+
+
 		-----------------------------------------------------------------------
 		-- I was tempted to do that actually - make a nice, clean,
 		--  toggle-making function. But here we have a prime example of why
@@ -284,6 +287,7 @@ end
 function Me.Options_Apply()
 	Gopher.HideFailureMessages( Me.db.global.hidefailed )
 	Gopher.SetSplitmarks( Me.db.global.premark, Me.db.global.postmark, true )
+
 end
 
 -------------------------------------------------------------------------------
