@@ -322,9 +322,10 @@ function Me.OnLogin()
    Me.frame:RegisterEvent( "ADDON_ACTION_BLOCKED" )
    
    -- Here's where we add the feature to hide the failure messages in the
-   -- chat frames, the failure messages that the system sends when your
-   ChatFrame_AddMessageEventFilter( "CHAT_MSG_SYSTEM", -- chat gets
-      function( _, _, msg, sender )                   --  throttled.
+   -- chat frames, the failure messages that the system sends when your chat gets throttled
+   local AddFilter = ChatFrameUtil and ChatFrameUtil.AddMessageEventFilter or ChatFrame_AddMessageEventFilter
+   AddFilter("CHAT_MSG_SYSTEM",
+       function(_, _, msg, sender )
          -- `ERR_CHAT_THROTTLED` is the localized string.
          if Me.hide_failure_messages and msg == ERR_CHAT_THROTTLED then 
             -- Returning true from these callbacks block the message
@@ -1967,10 +1968,10 @@ end
 
 if not Me.hooks.ChatFrame_OpenChat then
    Me.hooks.ChatFrame_OpenChat = true
+   hooksecurefunc(ChatFrameUtil, "OpenChat", function( ... )
+      Me.hooks.ChatFrame_OpenChatOrig = ChatFrame_OpenChat 
    -- Direct override so we can intercept a user's Enter key
-   -- before the editbox opens. This avoids requiring two Enter presses, which was annoying
-   if type( ChatFrame_OpenChat ) == "function" then
-      Me.hooks.ChatFrame_OpenChatOrig = ChatFrame_OpenChat
+   -- before the editbox opens. This avoids requiring two Enter presses, which was annoying  
       ChatFrame_OpenChat = function( text, chatFrame )
          if Me.prompt_continue and (Me.intercept_enter == nil or Me.intercept_enter) then
             Me.DebugLog( "ChatFrame_OpenChat intercepted - forcing resume." )
@@ -1980,13 +1981,13 @@ if not Me.hooks.ChatFrame_OpenChat then
          end
          return Me.hooks.ChatFrame_OpenChatOrig( text, chatFrame )
       end
+   end)
    else
        -- Fallback to secure post-hook if override isn't available.   
        hooksecurefunc( "ChatFrame_OpenChat", function( ... )
           Me.OnOpenChat( ... )
       end)
    end
-end
 
 if C_Club then -- [7.x compat]
    if not Me.hooks.ClubSendMessage then
