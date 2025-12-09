@@ -42,6 +42,11 @@ local DB_DEFAULTS = {
 		-- It's called protection and not something like undo because it's
 		--  designed to protect your emotes if you disconnect.
 		emoteprotection = true;
+		
+		-- EXPERIMENTAL: Prefer splitting long messages at quotation marks
+		--  instead of whitespace. When enabled, dialogue wrapped in quotes
+		--  will stay together across chunks. Off by default.
+		quote_aware_split = false;
 
 	};
 	-- The `char` table is unique per character, meaning that each character
@@ -234,10 +239,20 @@ local OPTIONS_TABLE = {
 				Me.EmoteProtection.OptionsChanged()
 			end;
 			get = function( info ) return Me.db.global.emoteprotection end;
-			-- If we did have this built with a helper function, we could
-			--  always adjust what we want afterwards. Maybe that's a pro of
-			--  not setting everything up directly in the table, and assigning
-			--  it from the outside--more flexibility.
+		};
+		
+		-----------------------------------------------------------------------
+		-- EXPERIMENTAL: Quote-aware splitting option
+		quote_aware_split = {
+			name  = L["Quote-Aware Splitting (Experimental)"];
+			desc  = L["|cffff0000[EXPERIMENTAL]|r When enabled, long messages are split at quotation marks instead of whitespace. This keeps dialogue together across chunks. Disable this option to use the original splitting behavior."];
+			order = 65;
+			type  = "toggle";
+			width = "full";
+			set = function( info, val )
+				Me.db.global.quote_aware_split = val
+			end;
+			get = function( info ) return Me.db.global.quote_aware_split end;
 		};
 		
 		-----------------------------------------------------------------------

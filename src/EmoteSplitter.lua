@@ -115,6 +115,13 @@ SlashCmdList["EMOTESPLITTER"] = function( msg )
 		print( L( "Max message length set to {1}.", v ))         -- right?
 		return
 	end
+	
+	-- Enable/disable debug logging for split messages
+	if arg1:lower() == "debug" then
+		Gopher.debug_log = not Gopher.debug_log
+		print(string.format("SplitMessage debug logging: %s", Gopher.debug_log and "ON" or "OFF"))
+		return
+	end
 end
 
 -------------------------------------------------------------------------------
@@ -176,6 +183,9 @@ function Me:OnEnable()
 		local editbox = _G["ChatFrame" .. i .. "EditBox"]
 		if editbox then
 			editbox:HookScript("OnShow", Me.ChatEdit_OnShow)
+			-- Also hook OnEditFocusGained to catch when Blizzard resets limits
+			-- when switching chat modes (e.g., /say to /whisper)
+			editbox:HookScript("OnEditFocusGained", Me.ChatEdit_OnShow)
 		end
 	end
 	
