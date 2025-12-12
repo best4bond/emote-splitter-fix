@@ -47,6 +47,9 @@ local DB_DEFAULTS = {
 		--  instead of whitespace. When enabled, dialogue wrapped in quotes
 		--  will stay together across chunks. Off by default.
 		quote_aware_split = false;
+		
+		-- Track if user has acknowledged the CrossRP warning
+		crossrp_warning_acknowledged = false;
 
 	};
 	-- The `char` table is unique per character, meaning that each character
@@ -98,9 +101,22 @@ local OPTIONS_TABLE = {
 			-- `name` for description sections contains the text to fill the
 			name = L( "Version: {1}", -- widget with.
 			          C_AddOns.GetAddOnMetadata( "EmoteSplitter", "Version" ))
-			       .. "|n" .. L["by Tammya-MoonGuard"];
+			       .. "|n" .. L["Updated by Lorthendor-MoonGuard, original code by Tammya-MoonGuard"];
 			type = "description";
 		};
+		-----------------------------------------------------------------------
+		-- CrossRP compatibility warning
+		crossrp_warning = (function()
+			if C_AddOns.IsAddOnLoaded("CrossRP") then
+				return {
+					order = 15;
+					name = "|cffff0000WARNING: CrossRP Detected|r\n|cffff6600CrossRP is known to break Emote Splitter's functionality. Please disable CrossRP if you want Emote Splitter to work correctly.|r";
+					type = "description";
+					width = "full";
+				}
+			end
+			return nil
+		end)();
 		-----------------------------------------------------------------------
 		-- Each of these entries adds an element to the configuration UI, and
 		--  they each control one of the options in our database.
